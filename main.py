@@ -18,10 +18,7 @@ elevenlabs_key = os.getenv("ELEVENLABS_KEY")
 app = FastAPI()
 
 origins = [
-    "http://localhost:5174",
-    "http://localhost:5173",
     "http://localhost:8000",
-    "http://localhost:3000",
 ]
 
 app.add_middleware(
@@ -59,24 +56,28 @@ def transcribe_audio(file):
     with open(file.filename, 'wb') as buffer:
         buffer.write(file.file.read())
     audio_file = open(file.filename, "rb")
-    transcript = openai.Audio.transcribe("whisper-1", audio_file)
-    print(transcript)
+    transcript = openai.audio.transcriptions.create(
+        model="whisper-1",
+        file=audio_file
+    )
+    print(transcript.text)
     return transcript
 
 def get_chat_response(user_message):
     messages = load_messages()
-    messages.append({"role": "user", "content": user_message['text']})
+    messages.append({"role": "user", "content": user_message.text})
 
     # Send to ChatGpt/OpenAi
-    gpt_response = gpt_response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+    gpt_response = openai.chat.completions.create(
+        model="gpt-4o-mini",
         messages=messages
-        )
+    )
 
-    parsed_gpt_response = gpt_response['choices'][0]['message']['content']
+    parsed_gpt_response = gpt_response.choices[0].message.content
+    print(parsed_gpt_response)
 
     # Save messages
-    save_messages(user_message['text'], parsed_gpt_response)
+    save_messages(user_message.text, parsed_gpt_response)
 
     return parsed_gpt_response
 
@@ -93,7 +94,7 @@ def load_messages():
                 messages.append(item)
     else:
         messages.append(
-            {"role": "system", "content": "You are interviewing the user for a front-end React developer position. Ask short questions that are relevant to a junior level developer. Your name is Greg. The user is Travis. Keep responses under 30 words and be funny sometimes."}
+            {"role": "system", "content": "You are interviewing the user for a python data engineer position. Ask short questions that are relevant to a junior level developer. Your name is Greg. The user is Julius. Keep responses under 30 words and be funny sometimes."}
         )
     return messages
 
@@ -135,6 +136,7 @@ def text_to_speech(text):
             print('something went wrong')
     except Exception as e:
         print(e)
+
 
 
 #1. Send in audio, and have it transcribed
