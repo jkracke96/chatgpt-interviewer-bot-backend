@@ -29,9 +29,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
 
 @app.post("/talk")
 async def post_audio(file: UploadFile):
@@ -44,11 +46,13 @@ async def post_audio(file: UploadFile):
 
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
 
+
 @app.get("/clear")
 async def clear_history():
     file = 'database.json'
     open(file, 'w')
     return {"message": "Chat history has been cleared"}
+
 
 # Functions
 def transcribe_audio(file):
@@ -62,6 +66,7 @@ def transcribe_audio(file):
     )
     print(transcript.text)
     return transcript
+
 
 def get_chat_response(user_message):
     messages = load_messages()
@@ -81,6 +86,7 @@ def get_chat_response(user_message):
 
     return parsed_gpt_response
 
+
 def load_messages():
     messages = []
     file = 'database.json'
@@ -98,6 +104,7 @@ def load_messages():
         )
     return messages
 
+
 def save_messages(user_message, gpt_response):
     file = 'database.json'
     messages = load_messages()
@@ -105,6 +112,7 @@ def save_messages(user_message, gpt_response):
     messages.append({"role": "assistant", "content": gpt_response})
     with open(file, 'w') as f:
         json.dump(messages, f)
+
 
 def text_to_speech(text):
     voice_id = 'pNInz6obpgDQGcFmaJgB'
@@ -138,8 +146,6 @@ def text_to_speech(text):
         print(e)
 
 
-
 #1. Send in audio, and have it transcribed
 #2. We want to send it to chatgpt and get a response
 #3. We want to save the chat history to send back and forth for context.
-
