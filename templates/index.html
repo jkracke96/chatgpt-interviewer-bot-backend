@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Audio Recorder</title>
+    </head>
+    <body>
+        <h1>Record Audio</h1>
+        <button id="recordButton">Start Recording</button>
+        <button id="stopButton" disabled>Stop Recording</button>
+        <audio id="audioPlayback" controls></audio>
+        <script>
+            let mediaRecorder;
+            let audioChunks = [];
+
+            const recordButton = document.getElementById("recordButton");
+            const stopButton = document.getElementById("stopButton");
+            const audioPlayback = document.getElementById("audioPlayback");
+
+            recordButton.onclick = async () => {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(audioChunks, { type: "audio/webm" });
+                    audioChunks = [];
+
+                    // Play the audio in the browser
+                    const audioURL = URL.createObjectURL(blob);
+                    audioPlayback.src = audioURL;
+
+                    // Send audio to the server
+                    const formData = new FormData();
+                    formData.append("audio", blob, "recording.webm");
+
+                    const response = await fetch("/upload", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    alert(result.message || "Audio uploaded!");
+                };
+
+                mediaRecorder.start();
+                recordButton.disabled = true;
+                stopButton.disabled = false;
+            };
+
+            stopButton.onclick = () => {
+                mediaRecorder.stop();
+                recordButton.disabled = false;
+                stopButton.disabled = true;
+            };
+        </script>
+    </body>
+    </html>
